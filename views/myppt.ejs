@@ -2,53 +2,120 @@
 
 	<!-- Used to fade in a background when a specific slide state is reached -->
 	<div class="state-background"></div>
-	
+
 	<!-- Any section element inside of this container is displayed as a slide -->
 	<div class="slides">
 		<section>
-			<h1>My Presentation</h1>
-			<h3 class="inverted">This is slide 1 description</h3>
+			<h1>elasticsearch</h1>
+			<h3 class="inverted">Topics</h3>
+			<ul>
+				<li>Installation</li>
+				<li>Defining indexes</li>
+				<li>Common queries</li>
+				<li>Facests</li>
+				<li>Scalability</li>
+			</ul>
 			<script>
 				// Delicously hacky. Look away.
 				if( navigator.userAgent.match( /(iPhone|iPad|iPod|Android)/i ) ) document.write( '<p style="color: rgba(0,0,0,0.3); text-shadow: none;">('+'Tap to navigate'+')</p>' );
 			</script>
 		</section>
-		
+
 		<section>
-			<h2>Slide 2</h2>
-			<p>
-				Please update slide 2 description here.
-			</p>
-			
+			<h2>Installation</h2>
+			<ol>
+				<li>Download and unzip the latest Elasticsearch distribution</li>
+				<li>Run bin/elasticsearch -f on Unix,
+or bin/elasticsearch.bat on Windows</li>
+				<li>Run curl -X GET http://localhost:9200/</li>
+			</ol>
+
 		</section>
-		
+
 		<!-- Example of nested vertical slides -->
 		<section>
 			<section>
-				<h2>Vertical Slides</h2>
-				<p>
-					Slides can be nested inside of other slides,<br/>
-					try pressing <a href="#/2/1">down</a>.
-				</p>
-				<a href="#/2/1" class="image">
-					<img src="/images/arrow_down.png">
-				</a>
+				<h2>Conceptos básicos de ElasticSearch</h2>
+				<ul>
+					<li>Index</li>
+					<li>Document</li>
+					<li>Document type</li>
+					<li>Node and cluster</li>
+					<li>Shard</li>
+					<li>Replica</li>
+				</ul>
 			</section>
 			<section>
-				<h2>Basement Level 1</h2>
-				<p>Press down or up to navigate.</p>
+				<h2>Definición de Índices</h2>
+				<p>Sin especificar mapeo a un tipo de documento específico</p>
+				<pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+Tire.index 'articles' do
+  delete
+  create
+
+  store :title => 'One',   :tags => ['ruby']
+  store :title => 'Two',   :tags => ['ruby', 'python']
+  store :title => 'Three', :tags => ['java']
+  store :title => 'Four',  :tags => ['ruby', 'php']
+
+  refresh
+end
+			</code></pre>
 			</section>
 			<section>
-				<h2>Basement Level 2</h2>
-				<p>Description for basement 2</p>
+				<h2>Creación de índice</h2>
+				<p>En este caso se especifica el mapeo personalizado para un tipo de documento</p>
+				<pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+Tire.index 'articles' do
+  delete
+
+  create :mappings => {
+    :article => {
+      :properties => {
+        :id       => { :type => 'string', :index => 'not_analyzed', :include_in_all => false },
+        :title    => { :type => 'string', :boost => 2.0,            :analyzer => 'snowball'  },
+        :tags     => { :type => 'string', :analyzer => 'keyword'                             },
+        :content  => { :type => 'string', :analyzer => 'snowball'                            }
+      }
+    }
+  }
+end
+			</code></pre>
 			</section>
 			<section>
-				<h2>Basement Level 3</h2>
-				<p>This is it, time to go back up.</p>
-				<a href="#/2" class="image">
-					<img src="/images/arrow_up.png">
-				</a>
+				<h2>Bulk storage</h2>
+				<p>Si tenemos grandes cantidades de datos, podemos agregarlos al índice de la siguiente manera:</p>
+				<pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+articles = [
+  { :id => '1', :type => 'article', :title => 'one',   :tags => ['ruby']           },
+  { :id => '2', :type => 'article', :title => 'two',   :tags => ['ruby', 'python'] },
+  { :id => '3', :type => 'article', :title => 'three', :tags => ['java']           },
+  { :id => '4', :type => 'article', :title => 'four',  :tags => ['ruby', 'php']    }
+]
+
+Tire.index 'articles' do
+  import articles
+end
+			</code></pre>
 			</section>
+			<section>
+				<h2>Preprocesamiento en la importación</h2>
+				<p>Los datos pueden ser pre-procesados antes de almacenarlos en el índice</p>
+				<pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+Tire.index 'articles' do
+  import articles do |documents|
+
+    documents.each { |document| document[:title].capitalize! }
+  end
+
+  refresh
+end
+			</code></pre>
+			</section>
+  		<section>
+				<h2>Agregar y borrar un documento</h2>
+			</section>
+
 		</section>
 
 		<section>
@@ -77,7 +144,7 @@
 
 	<!-- Displays presentation progress, max value changes via JS to reflect # of slides -->
 	<div class="progress"><span></span></div>
-	
+
 </div>
 
 
