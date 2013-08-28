@@ -13,7 +13,6 @@
 				<li>Defining indexes</li>
 				<li>Common queries</li>
 				<li>Facests</li>
-				<li>Scalability</li>
 			</ul>
 			<script>
 				// Delicously hacky. Look away.
@@ -110,26 +109,116 @@ Tire.index 'articles' do
 
   refresh
 end
-			</code></pre>
-			</section>
-  		<section>
-				<h2>Agregar y borrar un documento</h2>
-			</section>
+      </code></pre>
+      </section>
+      <section>
+        <h2>Agregar y borrar un documento</h2>
+
+        <p>Agregar:</p>
+        <pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+index = Tire.index 'articles'
+index.store type: self.class.name.downcase, id: id, title: title,
+      tags: tag_list, created_at: created_at, content: content
+      </code></pre>
+        <p>Borrar:</p>
+        <pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+Tire.index(INDEX_NAME).remove( DOCUMENT_TYPE, DOCUMENT_ID )
+      </code></pre>
+
+      </section>
+
+    </section>
+
+    <section>
+      <h2>Queries </h2>
+      <p>Consultas con facets:</p>
+      <pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+s = Tire.search 'articles' do
+  query do
+    string 'title:T*'
+  end
+
+  filter :terms, :tags => ['ruby']
+
+  sort { by :title, 'desc' }
+
+  facet 'global-tags', :global => true do
+    terms :tags
+  end
+
+  facet 'current-tags' do
+    terms :tags
+  end
+end
+      </code></pre>
 
 		</section>
 
-		<section>
-			<h2>Holistic Overview</h2>
-			<p>
-				Press <strong>ESC</strong> to enter the slide overview!
-			</p>
-		</section>
+    <section>
+      <p>mostrando los resultados</p>
+
+      <pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+s.results.facets['global-tags']['terms'].each do |f|
+  puts "#{f['term'].ljust(10)} #{f['count']}"
+end
+
+# ruby       3
+# python     1
+# php        1
+# java       1
+      </code></pre>
+    </section>
+
+    <section>
+      <h2>Queries </h2>
+      <p>Consultas booleanas</p>
+      <pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+Tire.search 'articles' do
+  query do
+    boolean do
+      should   { string 'tags:ruby' }
+      should   { string 'tags:java' }
+      must_not { string 'tags:python' }
+    end
+  end
+end
+      </code></pre>
+
+
+    </section>
+
+    <section>
+<p>Usando Active model Integration</p>
+      <pre><code contenteditable style="font-size: 18px; margin-top: 20px;">
+class Article < ActiveRecord::Base
+  include Tire::Model::Search
+  include Tire::Model::Callbacks
+
+  Article.search do
+    query             { string 'love' }
+    facet('timeline') { date   :published_on, :interval => 'month' }
+    sort              { by     :published_on, 'desc' }
+  end
+  mapping do
+    indexes :id,           :index    => :not_analyzed
+    indexes :title,        :analyzer => 'snowball', :boost => 100
+    indexes :content,      :analyzer => 'snowball'
+    indexes :content_size, :as       => 'content.size'
+    indexes :author,       :analyzer => 'keyword'
+    indexes :published_on, :type => 'date', :include_in_all => false
+  end
+end
+      </code></pre>
+    </section>
 
 		<section>
-			<h2>Works in Mobile Safari</h2>
+			<h2>Muchas gracias</h2>
 			<p>
-				Try it out! You can swipe through the slides pinch your way to the overview.
-			</p>
+				github: https://github.com/EmanuelCadems/es-lw
+      </p>
+      <p>
+        https://github.com/EmanuelCadems/slide-es
+      </p>
 		</section>
 
 	</div>
